@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace sat_solver.io;
 
-public class DimacsReader : IAsyncDisposable
+public class DimacsReader : IDimacsReader, IAsyncDisposable
 {
     private const int EOF = -1;
     private const int COMMENT_LINE_STARTER = 'c';
@@ -140,6 +140,7 @@ public class DimacsReader : IAsyncDisposable
             throw new InvalidDataException("encountered unexpected end of file after parsing problem starter");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ReadInt()
     {
         int value = 0;

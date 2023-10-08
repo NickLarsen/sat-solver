@@ -20,6 +20,6 @@ public interface ISatSolver
 {
     public int LiteralCount { get; }
     public int ClauseCount { get; }
-    void Init(DimacsReader problem);
+    void Init(IDimacsReader problem);
     SatSolverResponse Solve();
 }

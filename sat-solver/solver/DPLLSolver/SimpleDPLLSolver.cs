@@ -10,7 +10,7 @@ public class SimpleDPLLSolver : ISatSolver
 
     private readonly List<Clause> _clauses = new List<Clause>();
 
-    public void Init(DimacsReader fileReader)
+    public void Init(IDimacsReader fileReader)
     {
         DPLLCalls = 0;
         fileReader.OpenReader();
@@ -19,27 +19,29 @@ public class SimpleDPLLSolver : ISatSolver
         _clauses.Capacity = ClauseCount;
         LoadClauses(fileReader);
     }
-    private void LoadClauses(DimacsReader fileReader)
+    private void LoadClauses(IDimacsReader fileReader)
     {
-        var seen = new HashSet<int>(ClauseCount);
+        //var seen = new HashSet<int>(ClauseCount);
+        var a = Array.Empty<int>();
         while(true) {
             var clause = fileReader.ReadNextClause();
             if (clause == null)
                 break;
-            seen.Clear();
-            bool autoSatisfied = false;
-            // pre-processing for one time trivial improvements
-            // removes duplicate literals in the same clause
-            // removes clauses that are trivially satisfied
-            foreach(var literal in clause)
-            {
-                seen.Add(literal); // takes care of deduping same vars
-                int opposite = literal * -1;
-                autoSatisfied = seen.Contains(opposite);
-                if (autoSatisfied) break;
-            }
-            if (autoSatisfied) continue;
-            _clauses.Add(new Clause { Literals = seen.ToArray() });
+            //seen.Clear();
+            // bool autoSatisfied = false;
+            // // pre-processing for one time trivial improvements
+            // // removes duplicate literals in the same clause
+            // // removes clauses that are trivially satisfied
+            // foreach(var literal in clause)
+            // {
+            //     seen.Add(literal); // takes care of deduping same vars
+            //     int opposite = literal * -1;
+            //     autoSatisfied = seen.Contains(opposite);
+            //     if (autoSatisfied) break;
+            // }
+            // if (autoSatisfied) continue;
+            //_clauses.Add(new Clause { Literals = seen.ToArray() });
+            _clauses.Add(new Clause { Literals = a });
         }
     }
 
