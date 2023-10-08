@@ -13,9 +13,7 @@ public class SimpleDPLLSolver : ISatSolver
     public void Init(IDimacsReader fileReader)
     {
         DPLLCalls = 0;
-        fileReader.OpenReader();
-        LiteralCount = fileReader.LiteralCount;
-        ClauseCount = fileReader.ClauseCount;
+        (LiteralCount, ClauseCount) = fileReader.ReadHeader();
         _clauses.Capacity = ClauseCount;
         LoadClauses(fileReader);
     }

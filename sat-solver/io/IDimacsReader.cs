@@ -2,8 +2,6 @@ namespace sat_solver.io;
 
 public interface IDimacsReader
 {
-    int LiteralCount { get; }
-    int ClauseCount { get; }
-    void OpenReader();
+    (int literalCount, int clauseCount) ReadHeader();
     IReadOnlyList<int>? ReadNextClause();
 }

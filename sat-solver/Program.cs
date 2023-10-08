@@ -15,7 +15,7 @@ var fileInfo = new FileInfo(filePath);
 if (!fileInfo.Exists)
     throw new ArgumentException($"provided file does not exist '{fileInfo.FullName}'");
 
-var fileReader = new DimacsReader(fileInfo);
+IDimacsReader fileReader = new DimacsReader(fileInfo);
 ISatSolver solver = new SimpleDPLLSolver();
 solver.Init(fileReader);
 Console.WriteLine($"Literal Count: {solver.LiteralCount}, Clause Count: {solver.ClauseCount}");

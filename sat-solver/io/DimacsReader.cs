@@ -8,11 +8,7 @@ public class DimacsReader : IDimacsReader, IAsyncDisposable
     private const int COMMENT_LINE_STARTER = 'c';
     private const int PROBLEM_LINE_STARTER = 'p';
 
-    public int LiteralCount => _literalCount;
-    public int ClauseCount => _clauseCount;
-
-    private readonly FileInfo _fileInfo;
-    private Stream _fileStream = Stream.Null;
+    private Stream _fileStream;
     // this buffer is used to return clauses
     // this impl arbitrarily limits the max number of clauses to what this data structure can support
     private List<int> _buffer = new List<int>();
@@ -22,7 +18,7 @@ public class DimacsReader : IDimacsReader, IAsyncDisposable
 
     public DimacsReader(FileInfo fileInfo)
     {
-        _fileInfo = fileInfo;
+        _fileStream = File.OpenRead(fileInfo.FullName);
     }
 
     public ValueTask DisposeAsync()
@@ -32,12 +28,6 @@ public class DimacsReader : IDimacsReader, IAsyncDisposable
             return _fileStream.DisposeAsync();
         }
         return ValueTask.CompletedTask;
-    }
-
-    public void OpenReader()
-    {
-        _fileStream = File.OpenRead(_fileInfo.FullName);
-        ReadHeader();
     }
 
     public IReadOnlyList<int>? ReadNextClause()
@@ -75,7 +65,7 @@ public class DimacsReader : IDimacsReader, IAsyncDisposable
         //Console.WriteLine($"{_current} '{Convert.ToChar(_current)}'");
     }
 
-    private void ReadHeader()
+    public (int literalCount, int clauseCount) ReadHeader()
     {
         while (true)
         {
@@ -92,6 +82,7 @@ public class DimacsReader : IDimacsReader, IAsyncDisposable
             else
                 throw new InvalidDataException($"unexpected value encountered while reading header '{_current}'");
         }
+        return (_literalCount, _clauseCount);
     }
 
     private void ReadComment()
