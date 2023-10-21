@@ -2,48 +2,70 @@ using System.Runtime.CompilerServices;
 
 namespace sat_solver.io;
 
-public class DimacsReader : IDimacsReader, IDisposable
+public class DimacsReaderBuffered : IDimacsReader
 {
-    private const int EOF = -1;
-    private const int COMMENT_LINE_STARTER = 'c';
-    private const int PROBLEM_LINE_STARTER = 'p';
+    private const byte COMMENT_LINE_STARTER = (byte)'c';
+    private const byte PROBLEM_LINE_STARTER = (byte)'p';
+    private const byte CARRIAGE_RETURN = (byte)'\r';
+    private const byte NEW_LINE = (byte)'\n';
 
-    private Stream _fileStream;
+
+    public int LiteralCount => _literalCount;
+    public int ClauseCount => _clauseCount;
+
     // this buffer is used to return clauses
     // this impl arbitrarily limits the max number of clauses to what this data structure can support
-    private List<int> _buffer = new List<int>();
+    private readonly List<int> _buffer = new List<int>();
     private int _literalCount;
     private int _clauseCount;
-    private int _current;
+    private byte _current;
+    private readonly byte[] _fileContents;
+    private int _fileContentsIndex = 0;
 
-    public DimacsReader(FileInfo fileInfo)
+    public DimacsReaderBuffered(FileInfo fileInfo)
     {
-        _fileStream = File.OpenRead(fileInfo.FullName);
+        _fileContents = File.ReadAllBytes(fileInfo.FullName);
+        if (_fileContents.Length == 0) throw new InvalidDataException("read zero bytes from the file");
     }
 
-    public void Dispose()
+    public (int literalCount, int clauseCount) ReadHeader()
     {
-        if (_fileStream != null)
+        while (true)
         {
-            _fileStream.Dispose();
+            ReadNextByte();
+            if (IsEOF())
+                throw new InvalidDataException("unexpected end of file encountered while reading header");
+            if (_current == COMMENT_LINE_STARTER)
+                ReadComment();
+            else if (_current == PROBLEM_LINE_STARTER)
+            {
+                ReadProblem();
+                break;
+            }
+            else
+                throw new InvalidDataException($"unexpected value encountered while reading header '{_current}'");
         }
+        return (_literalCount, _clauseCount);
     }
 
     public IReadOnlyList<int>? ReadNextClause()
     {
-        if (_current == EOF)
-            return null;
+        if (_current == CARRIAGE_RETURN)
+            ReadNextByte();
+        if (_current == NEW_LINE) {
+            if (IsEOF())
+                return null;
+            ReadNextByte();
+        }
         _buffer.Clear();
         while(true) {
             int value = ReadInt();
             if (value == 0)
             {
-                if (_current == '\r')
+                if (_current == CARRIAGE_RETURN)
                     ReadNextByte();
-                if (_current != '\n')
+                if (_current != NEW_LINE)
                     throw new InvalidDataException("expected to find end of line after end of clause");
-                // we want to move to the start of the next line for the next call
-                ReadNextByte();
                 break;
             }
             if (_current == ' ')
@@ -60,28 +82,14 @@ public class DimacsReader : IDimacsReader, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ReadNextByte()
     {
-        _current = _fileStream.ReadByte();
-        //Console.WriteLine($"{_current} '{Convert.ToChar(_current)}'");
+        _current = _fileContents[_fileContentsIndex];
+        _fileContentsIndex++;
     }
 
-    public (int literalCount, int clauseCount) ReadHeader()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsEOF()
     {
-        while (true)
-        {
-            ReadNextByte();
-            if (_current == EOF)
-                throw new InvalidDataException("unexpected end of file encountered while reading header");
-            if (_current == COMMENT_LINE_STARTER)
-                ReadComment();
-            else if (_current == PROBLEM_LINE_STARTER)
-            {
-                ReadProblem();
-                break;
-            }
-            else
-                throw new InvalidDataException($"unexpected value encountered while reading header '{_current}'");
-        }
-        return (_literalCount, _clauseCount);
+        return _fileContentsIndex >= _fileContents.Length;
     }
 
     private void ReadComment()
@@ -89,7 +97,7 @@ public class DimacsReader : IDimacsReader, IDisposable
         if (_current != COMMENT_LINE_STARTER)
             throw new InvalidOperationException("ReadComment called but not currently at start of comment line");
         // just skipping comments
-        while(_current != '\n') {
+        while(_current != NEW_LINE) {
             ReadNextByte();
         }
     }
@@ -120,14 +128,10 @@ public class DimacsReader : IDimacsReader, IDisposable
             throw new InvalidDataException("reading problem did not encounter a space immediately following the literal count in the problem starter");
         ReadNextByte();
         _clauseCount = ReadInt();
-        if (_current == '\r')
+        if (_current == CARRIAGE_RETURN)
             ReadNextByte();
-        if (_current != '\n')
+        if (_current != NEW_LINE)
             throw new InvalidDataException("reading problem did not encounter a new line immediately following the clause count in the problem starter");
-        // we want to start on the next line
-        ReadNextByte();
-        if (_current == EOF && _clauseCount > 0)
-            throw new InvalidDataException("encountered unexpected end of file after parsing problem starter");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

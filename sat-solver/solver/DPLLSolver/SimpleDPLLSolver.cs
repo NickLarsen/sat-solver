@@ -19,27 +19,26 @@ public class SimpleDPLLSolver : ISatSolver
     }
     private void LoadClauses(IDimacsReader fileReader)
     {
-        //var seen = new HashSet<int>(ClauseCount);
+        var seen = new HashSet<int>(ClauseCount);
         var a = Array.Empty<int>();
         while(true) {
             var clause = fileReader.ReadNextClause();
             if (clause == null)
                 break;
-            //seen.Clear();
-            // bool autoSatisfied = false;
-            // // pre-processing for one time trivial improvements
-            // // removes duplicate literals in the same clause
-            // // removes clauses that are trivially satisfied
-            // foreach(var literal in clause)
-            // {
-            //     seen.Add(literal); // takes care of deduping same vars
-            //     int opposite = literal * -1;
-            //     autoSatisfied = seen.Contains(opposite);
-            //     if (autoSatisfied) break;
-            // }
-            // if (autoSatisfied) continue;
-            //_clauses.Add(new Clause { Literals = seen.ToArray() });
-            _clauses.Add(new Clause { Literals = a });
+            seen.Clear();
+            bool autoSatisfied = false;
+            // pre-processing for one time trivial improvements
+            // removes duplicate literals in the same clause
+            // removes clauses that are trivially satisfied
+            foreach(var literal in clause)
+            {
+                seen.Add(literal); // takes care of deduping same vars
+                int opposite = literal * -1;
+                autoSatisfied = seen.Contains(opposite);
+                if (autoSatisfied) break;
+            }
+            if (autoSatisfied) continue;
+            _clauses.Add(new Clause { Literals = seen.ToArray() });
         }
     }
 
