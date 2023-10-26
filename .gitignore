@@ -30,3 +30,7 @@ obj/
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/dotnetcore,visualstudiocode
+
+# ignore the downloaded problem files
+/problems/**/*.cnf
+/problems/**/*.xz

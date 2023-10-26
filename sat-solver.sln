@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sat-solver", "sat-solver\sat-solver.csproj", "{8995AA1E-974B-4CD0-9F5A-A771AE563114}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sat-solver.test", "sat-solver.test\sat-solver.test.csproj", "{029DE7DC-D383-44AD-B859-FF5BA7D90F07}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8995AA1E-974B-4CD0-9F5A-A771AE563114}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8995AA1E-974B-4CD0-9F5A-A771AE563114}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8995AA1E-974B-4CD0-9F5A-A771AE563114}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8995AA1E-974B-4CD0-9F5A-A771AE563114}.Release|Any CPU.Build.0 = Release|Any CPU
+		{029DE7DC-D383-44AD-B859-FF5BA7D90F07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{029DE7DC-D383-44AD-B859-FF5BA7D90F07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{029DE7DC-D383-44AD-B859-FF5BA7D90F07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{029DE7DC-D383-44AD-B859-FF5BA7D90F07}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
