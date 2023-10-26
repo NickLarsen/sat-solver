@@ -89,8 +89,11 @@ public class NoCopyDPLLSolverTests
                     break;
             }
         }
-        Assert.InRange(seen1, 200, 800);
-        Assert.InRange(seen2, 200, 800);
+        // the chance for the values to fall outside this range assuming fair flips
+        // is approximately 1 in 809,028,370,860,459 so if this fails there's a good
+        // chance the flip isn't fair
+        Assert.InRange(seen1, 375, 625);
+        Assert.InRange(seen2, 375, 625);
     }
 
     [Fact]
