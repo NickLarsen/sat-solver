@@ -183,10 +183,11 @@ public class NoCopyDPLLSolver : ISatSolver
         public int GetUnassignedVariable()
         {
             int remaining = LiteralCount - _assignmentCount;
+            if (remaining == 0) return -1;
             int selection = _random.Next(remaining);
             int passed = 0;
             int i = 1;
-            for(; i < remaining; i++)
+            for(; i < _assignments.Length; i++)
             {
                 if (_assignments[i].HasValue)
                     continue;
