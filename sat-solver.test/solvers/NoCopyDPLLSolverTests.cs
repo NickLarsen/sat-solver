@@ -26,7 +26,8 @@ public class NoCopyDPLLSolverTests
         // can only rollback after a decision!
         problem.SetLiteral(2, false, isDecision: true);
         Assert.False(problem.IsFullySatisfied());
-        problem.SetLiteral(1, true);
+        // no decision, so it rolls back past this
+        problem.SetLiteral(1, true, isDecision: false);
         Assert.True(problem.IsFullySatisfied());
         problem.Rollback();
         Assert.False(problem.IsFullySatisfied());
@@ -174,5 +175,75 @@ public class NoCopyDPLLSolverTests
         problem.Rollback();
         problem.SetLiteral(3, true, isDecision: false); // (F, U, T)
         Assert.Null(problem.GetUnitClauseLiteral()); // (F, U, T) satisfied = not unit
+    }
+
+    [Fact]
+    public void EliminateUnitClauses()
+    {
+        var problem = new NoCopyDPLLSolver.Problem(6, 4);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, -2 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 2, 3 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 3, 4 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 5, 6 }));
+        // forces first clause to unit clause
+        problem.SetLiteral(1, false, isDecision: true);
+        // sets 2, false => clause 2 becomes unit clause
+        // sets 3, true => clause 2 and 3 satisfied, leaving clause 4 unsatisfied and unmodified
+        NoCopyDPLLSolver.EliminateUnitClauses(problem);
+        var currentAssignments = problem.DebugAsssignments;
+        Assert.Equal(false, currentAssignments[1]);
+        Assert.Equal(false, currentAssignments[2]);
+        Assert.Equal(true, currentAssignments[3]);
+        Assert.Equal((bool?)null, currentAssignments[4]);
+        Assert.Equal((bool?)null, currentAssignments[5]);
+        Assert.Equal((bool?)null, currentAssignments[6]);
+    }
+
+    [Fact]
+    public void GetPureLiterals()
+    {
+        var problem = new NoCopyDPLLSolver.Problem(3, 3);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, -2 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 2, 3 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { -1, -3 }));
+        Assert.Empty(problem.GetPureLiterals());
+        problem.SetLiteral(1, true, isDecision: true);
+        // 1, true => clause 1 satisfied
+        // clause 2, literal 2 is pure
+        // clause 3, -1 is assigned but not satisfied, -3 and 3 both exist in unsatisfied clauses
+        Assert.Equal(new[] { 2 }, problem.GetPureLiterals());
+        problem.SetLiteral(2, true, isDecision: true);
+        // now that clause 2 is satisfied, only clause 3, and only -3 available
+        Assert.Equal(new[] { -3 }, problem.GetPureLiterals());
+    }
+
+    [Fact]
+    public void AssignPureLiteralsNoPureLiterals()
+    {
+        var problem = new NoCopyDPLLSolver.Problem(3, 3);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, -2 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 2, 3 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { -1, -3 }));
+        Assert.Empty(problem.GetPureLiterals());
+        NoCopyDPLLSolver.AssignPureLiterals(problem);
+        var assignments = problem.DebugAsssignments;
+        Assert.Equal((bool?)null, assignments[1]);
+        Assert.Equal((bool?)null, assignments[2]);
+        Assert.Equal((bool?)null, assignments[3]);
+    }
+
+    [Fact]
+    public void AssignPureLiteralsSomePure()
+    {
+        var problem = new NoCopyDPLLSolver.Problem(3, 4);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, -2 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 2, 3 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, -3 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { -2, 3 }));
+        NoCopyDPLLSolver.AssignPureLiterals(problem);
+        var assignments = problem.DebugAsssignments;
+        Assert.Equal(true, assignments[1]);
+        Assert.Equal((bool?)null, assignments[2]);
+        Assert.Equal(true, assignments[3]);
     }
 }

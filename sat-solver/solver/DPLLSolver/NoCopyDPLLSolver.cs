@@ -75,38 +75,57 @@ public class NoCopyDPLLSolver : ISatSolver
         return result;
     }
 
-    private void EliminateUnitClauses(Problem problem)
+    public static void EliminateUnitClauses(Problem problem)
     {
         while (true)
         {
             var unitClausesLiteral = problem.GetUnitClauseLiteral();
             if (!unitClausesLiteral.HasValue) break;
             var literal = unitClausesLiteral.Value;
-            bool isPositive = true;
+            bool satisfiedValue = true;
             if (literal < 0)
             {
                 literal = -literal;
-                isPositive = false;
+                satisfiedValue = false;
             }
-            problem.SetLiteral(literal, isPositive, isDecision: false);
+            problem.SetLiteral(literal, satisfiedValue, isDecision: false);
         }
     }
 
-    private void AssignPureLiterals(Problem problem)
+    public static void AssignPureLiterals(Problem problem)
     {
-        throw new NotImplementedException();
+        while (true)
+        {
+            var pureLiterals = problem.GetPureLiterals();
+            if (pureLiterals.Count == 0)
+                break;
+            foreach(var literal in pureLiterals)
+            {
+                int lit = literal;
+                bool satisfiedValue = true;
+                if (literal < 0)
+                {
+                    lit = -lit;
+                    satisfiedValue = false;
+                }
+                problem.SetLiteral(lit, satisfiedValue, isDecision: false);
+            }
+        }
     }
 
     public class Problem
     {
         public int LiteralCount { get; }
         public int ClauseCount { get; }
+        public bool?[] DebugAsssignments => _assignments;
 
         private List<Clause> _clauses;
         private bool?[] _assignments;
         private Stack<int> _assignmentsOrdered;
         private int _assignmentCount = 0;
         private Random _random = new Random();
+
+        private readonly int[] _pureLiteralBuffer;
 
         public Problem(int literalCount, int clauseCount)
         {
@@ -117,6 +136,8 @@ public class NoCopyDPLLSolver : ISatSolver
             _assignments = new bool?[literalCount + 1];
             // the times 2 here is because we're adding zeros to indicate decisions
             _assignmentsOrdered = new Stack<int>(literalCount * 2);
+            // the times 2 here is because we're storing positive and negative side by side
+            _pureLiteralBuffer = new int[literalCount + 1];
         }
 
         public void AddClause(Clause clause)
@@ -154,7 +175,7 @@ public class NoCopyDPLLSolver : ISatSolver
             return _assignments.Select(m => m ?? false).ToArray();
         }
 
-        public void SetLiteral(int literal, bool value, bool isDecision = false)
+        public void SetLiteral(int literal, bool value, bool isDecision)
         {
             // if it's a decision, it's a rollback point
             if (isDecision)
@@ -256,7 +277,7 @@ public class NoCopyDPLLSolver : ISatSolver
                 }
                 else
                 {
-                    unassigned = lit;
+                    unassigned = literal;
                 }
             }
             if (unassigned.HasValue && unassigned != 0)
@@ -264,6 +285,42 @@ public class NoCopyDPLLSolver : ISatSolver
                 return unassigned.Value;
             }
             return null;
+        }
+
+        public IReadOnlyList<int> GetPureLiterals()
+        {
+            Array.Clear(_pureLiteralBuffer);
+            foreach(var clause in _clauses)
+            {
+                // if the clause is satisfied, then don't count anything
+                if (ClauseIsSatisfied(clause))
+                    continue;
+                // if not satisfied, count all unassigned variables
+                foreach(var literal in clause.Literals)
+                {
+                    int lit = Math.Abs(literal);
+                    if (_assignments[lit].HasValue)
+                        continue;
+                    // this works by having 0 be "assigned value"
+                    // 1 is negation, 2 is natural
+                    // 3 is both negation and natural
+                    // bitwise OR is how we combine these values
+                    int value = literal < 0 ? 1 : 2;
+                    _pureLiteralBuffer[lit] |= value;
+                }
+            }
+            // usually when you call this it will be very few pure literals
+            // so this just avoid excess resizing
+            var result = new List<int>(32);
+            for(int literal = 1; literal < _pureLiteralBuffer.Length; literal++)
+            {
+                var seen = _pureLiteralBuffer[literal];
+                if (seen == 1)
+                    result.Add(-literal);
+                else if (seen == 2)
+                    result.Add(literal);
+            }
+            return result;
         }
     }
 
