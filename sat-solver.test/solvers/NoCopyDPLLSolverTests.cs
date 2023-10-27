@@ -1,4 +1,3 @@
-using sat_solver.io;
 using sat_solver.solver.DPLL;
 
 namespace sat_solver.test.solvers;
@@ -8,13 +7,13 @@ public class NoCopyDPLLSolverTests
     [Fact]
     public void IsFullySatisfied()
     {
-        var problem = new NoCopyDPLLSolver.Problem(2, 1);
+        var problem = new NoCopyDPLLSolver.Problem(3, 2);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, 2 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { -2, 3 }));
         Assert.False(problem.IsFullySatisfied());
-        problem.SetLiteral(2, true);
+        problem.SetLiteral(2, true, isDecision: true);
         Assert.False(problem.IsFullySatisfied());
-        problem.SetLiteral(0, true);
-        Assert.False(problem.IsFullySatisfied());
-        problem.SetLiteral(1, false);
+        problem.SetLiteral(3, true, isDecision: true);
         Assert.True(problem.IsFullySatisfied());
     }
 
@@ -22,11 +21,12 @@ public class NoCopyDPLLSolverTests
     public void Rollback()
     {
         var problem = new NoCopyDPLLSolver.Problem(2, 1);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, 2 }));
         Assert.False(problem.IsFullySatisfied());
         // can only rollback after a decision!
-        problem.SetLiteral(2, true, isDecision: true);
+        problem.SetLiteral(2, false, isDecision: true);
         Assert.False(problem.IsFullySatisfied());
-        problem.SetLiteral(1, false);
+        problem.SetLiteral(1, true);
         Assert.True(problem.IsFullySatisfied());
         problem.Rollback();
         Assert.False(problem.IsFullySatisfied());

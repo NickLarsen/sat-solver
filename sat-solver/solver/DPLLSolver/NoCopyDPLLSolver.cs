@@ -126,13 +126,32 @@ public class NoCopyDPLLSolver : ISatSolver
 
         public bool IsFullySatisfied()
         {
-            return _assignments.Skip(1).All(m => m.HasValue);
+            return _clauses.All(ClauseIsSatisfied);
+        }
+        private bool ClauseIsSatisfied(Clause clause)
+        {
+            return clause.Literals.Any(LiteralIsSatisfied);
+        }
+        private bool LiteralIsSatisfied(int literal)
+        {
+            int lit = literal;
+            bool satisfiedValue = true;
+            if (lit < 0)
+            {
+                lit = -lit;
+                satisfiedValue = false;
+            }
+            return _assignments[lit] == satisfiedValue;
         }
 
         public bool[] GetFinalAssignments()
         {
             // the variable at index 0 should be ignored by the caller
-            return _assignments.Select((m, i) => i == 0 ? false : m.Value).ToArray();
+            // we can be fully satisfied without assigning all literals
+            // if there are cases where the value of some variables simply
+            // does not matter, so in those cases, we just want to return
+            // a value for all variables and false it is
+            return _assignments.Select(m => m ?? false).ToArray();
         }
 
         public void SetLiteral(int literal, bool value, bool isDecision = false)
