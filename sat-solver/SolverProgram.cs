@@ -10,17 +10,19 @@ public class SolverProgram
     {
         var timer = Stopwatch.StartNew();
 
-        if (args.Length < 1)
-            throw new ArgumentOutOfRangeException("first argment should be the path of the DIMACS file to solve");
+        if (args.Length < 2)
+            throw new ArgumentOutOfRangeException("missing arguments 'solver file-path'");
+        Console.WriteLine($"Solver: {args[0]}");
+        string solverName = args[0];
         Console.WriteLine($"File: {args[0]}");
-        string fileArg = args[0].Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        string fileArg = args[1].Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         string filePath = Path.GetFullPath(fileArg);
         var fileInfo = new FileInfo(filePath);
         if (!fileInfo.Exists)
             throw new ArgumentException($"provided file does not exist '{fileInfo.FullName}'");
 
         IDimacsReader fileReader = new DimacsReaderBuffered(fileInfo);
-        ISatSolver solver = new SimpleDPLLSolver();
+        ISatSolver solver = GetSolverInstance(solverName);
         solver.Init(fileReader);
         Console.WriteLine($"Literal Count: {solver.LiteralCount}, Clause Count: {solver.ClauseCount}");
         Console.WriteLine($"Load time: {timer.Elapsed.TotalSeconds}");
@@ -30,5 +32,15 @@ public class SolverProgram
 
         timer.Stop();
         Console.WriteLine($"Time: {timer.Elapsed.TotalSeconds}");
+    }
+
+    private ISatSolver GetSolverInstance(string solverName)
+    {
+        return solverName switch
+        {
+            "simple" => new SimpleDPLLSolver(),
+            "no-copy" => new NoCopyDPLLSolver(),
+            _ => throw new ArgumentException("Unknown solver specified", "solverName"),
+        };
     }
 }
