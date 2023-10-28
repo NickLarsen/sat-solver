@@ -291,11 +291,7 @@ public class NoCopyDPLLSolver : ISatSolver
                     unassigned = literal;
                 }
             }
-            if (unassigned.HasValue && unassigned != 0)
-            {
-                return unassigned.Value;
-            }
-            return null;
+            return unassigned;
         }
 
         // usually when you call this it will be very few pure literals
