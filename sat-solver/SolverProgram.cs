@@ -14,7 +14,7 @@ public class SolverProgram
             throw new ArgumentOutOfRangeException("missing arguments 'solver file-path'");
         Console.WriteLine($"Solver: {args[0]}");
         string solverName = args[0];
-        Console.WriteLine($"File: {args[0]}");
+        Console.WriteLine($"File: {args[1]}");
         string fileArg = args[1].Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         string filePath = Path.GetFullPath(fileArg);
         var fileInfo = new FileInfo(filePath);
