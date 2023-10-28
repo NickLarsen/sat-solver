@@ -64,13 +64,17 @@ public class NoCopyDPLLSolver : ISatSolver
                 // TODO: proof
             };
         }
-        var firstUnassignedIndex = _problem.GetUnassignedVariable();
-        _problem.SetLiteral(firstUnassignedIndex, true, isDecision: true);
+        var literal = _problem.GetUnassignedVariable();
+        _problem.SetLiteral(literal, true, isDecision: true);
         var result = DPLL();
         if (result.Outcome == SatSolverOutcome.Unsatisfied) {
             _problem.Rollback();
-            _problem.SetLiteral(firstUnassignedIndex, false, isDecision: true);
+            _problem.SetLiteral(literal, false, isDecision: true);
             result = DPLL();
+            if (result.Outcome == SatSolverOutcome.Unsatisfied)
+            {
+                _problem.Rollback();
+            }
         }
         return result;
     }
@@ -177,6 +181,8 @@ public class NoCopyDPLLSolver : ISatSolver
 
         public void SetLiteral(int literal, bool value, bool isDecision)
         {
+            if (_assignments[literal].HasValue)
+                throw new InvalidOperationException($"attempting to set literal that is already set {literal}");
             // if it's a decision, it's a rollback point
             if (isDecision)
                 _assignmentsOrdered.Push(0);
@@ -184,6 +190,7 @@ public class NoCopyDPLLSolver : ISatSolver
             _assignments[literal] = value;
             _assignmentsOrdered.Push(literal);
             _assignmentCount += 1;
+            //LogAssignments("set lite", $"{_assignmentCount}, {literal}, {value}, {isDecision}");
         }
 
         public void Rollback()
@@ -198,6 +205,21 @@ public class NoCopyDPLLSolver : ISatSolver
                     _assignmentCount -= 1;
                 }
             }
+            //LogAssignments("rollback", $"{_assignmentCount}");
+        }
+
+        private void LogAssignments(string reason, string? extra = null)
+        {
+            var values = _assignments.Skip(1).Select(m => m switch { true => "T", false => "F", null => "U" }).ToArray();
+            Console.Write($"{reason}: ");
+            for(int i = 0; i < values.Length; i++)
+            {
+                Console.Write(values[i]);
+                Console.Write(',');
+                if (i % 10 == 9)
+                    Console.Write(' ');
+            }
+            Console.WriteLine($"    {extra}");
         }
 
         public bool HasConflict()
@@ -232,10 +254,13 @@ public class NoCopyDPLLSolver : ISatSolver
                 if (_assignments[i].HasValue)
                     continue;
                 if (passed == selection)
-                    break;
+                {
+                    //LogAssignments("get unas", $"-- {selection}, {passed}, {i}");
+                    return i;
+                }
                 passed += 1;
             }
-            return i;
+            throw new InvalidOperationException($"failed GetUnassignedVariable {LiteralCount}, {_assignmentCount}, {selection}");
         }
 
         public int? GetUnitClauseLiteral()
