@@ -69,32 +69,8 @@ public class NoCopyDPLLSolverTests
     public void GetUnassignedVariableNoAssignments()
     {
         var problem = new NoCopyDPLLSolver.Problem(2, 1);
-        int seen1 = 0;
-        int seen2 = 0;
-        for(int i = 0; i < 1000; i++)
-        {
-            int value = problem.GetUnassignedVariable();
-            switch (value)
-            {
-                case 1:
-                    seen1++;
-                    break;
-                case 2:
-                    seen2++;
-                    break;
-                case -1:
-                    Assert.Fail("received no unassigned flag when should not have");
-                    break;
-                default:
-                    Assert.Fail($"received unexpected value from GetUnassignedVariable {value}");
-                    break;
-            }
-        }
-        // the chance for the values to fall outside this range assuming fair flips
-        // is approximately 1 in 809,028,370,860,459 so if this fails there's a good
-        // chance the flip isn't fair
-        Assert.InRange(seen1, 375, 625);
-        Assert.InRange(seen2, 375, 625);
+        int value = problem.GetUnassignedVariable();
+        Assert.Equal(-1, value);
     }
 
     [Fact]
@@ -102,40 +78,28 @@ public class NoCopyDPLLSolverTests
     {
         var problem = new NoCopyDPLLSolver.Problem(2, 1);
         problem.SetLiteral(1, true, isDecision: true);
-        int seen1 = 0;
-        int seen2 = 0;
-        int trials = 1000;
-        for(int i = 0; i < trials; i++)
-        {
-            int value = problem.GetUnassignedVariable();
-            switch (value)
-            {
-                case 1:
-                    seen1++;
-                    break;
-                case 2:
-                    seen2++;
-                    break;
-                case -1:
-                    Assert.Fail("received no unassigned flag when should not have");
-                    break;
-                default:
-                    Assert.Fail($"received unexpected value from GetUnassignedVariable {value}");
-                    break;
-            }
-        }
-        Assert.Equal(0, seen1);
-        Assert.Equal(trials, seen2);
+        int value = problem.GetUnassignedVariable();
+        Assert.Equal(-2, value);
     }
 
     [Fact]
-    public void GetUnassignedVariableWhenNoUnassignedReturnsMinusOne()
+    public void GetUnassignedVariableOneAssignmentMax3()
+    {
+        var problem = new NoCopyDPLLSolver.Problem(3, 3);
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 1, 3 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { -1, -2 }));
+        problem.AddClause(new NoCopyDPLLSolver.Clause(new[] { 2, 3 }));
+        int value = problem.GetUnassignedVariable();
+        Assert.Equal(3, value);
+    }
+
+    [Fact]
+    public void GetUnassignedVariableWhenNoUnassignedThrows()
     {
         var problem = new NoCopyDPLLSolver.Problem(2, 1);
         problem.SetLiteral(1, true, isDecision: true);
         problem.SetLiteral(2, true, isDecision: true);
-        int selection = problem.GetUnassignedVariable();
-        Assert.Equal(-1, selection);
+        Assert.Throws<InvalidOperationException>(() => problem.GetUnassignedVariable());
     }
 
     [Fact]

@@ -16,6 +16,7 @@ public class NoCopyDPLLSolver : ISatSolver
         var (literalCount, clauseCount) = fileReader.ReadHeader();
         _problem = new Problem(literalCount, clauseCount);
         LoadClauses(fileReader);
+        //_problem.Diagnostics();
     }
     private void LoadClauses(IDimacsReader fileReader)
     {
@@ -33,7 +34,7 @@ public class NoCopyDPLLSolver : ISatSolver
             foreach(var literal in clause)
             {
                 seen.Add(literal); // takes care of deduping same vars
-                int opposite = literal * -1;
+                int opposite = -literal;
                 autoSatisfied = seen.Contains(opposite);
                 if (autoSatisfied) break;
             }
@@ -65,11 +66,13 @@ public class NoCopyDPLLSolver : ISatSolver
             };
         }
         var literal = _problem.GetUnassignedVariable();
-        _problem.SetLiteral(literal, true, isDecision: true);
+        var lit = Math.Abs(literal);
+        var value = literal > 0;
+        _problem.SetLiteral(lit, value, isDecision: true);
         var result = DPLL();
         if (result.Outcome == SatSolverOutcome.Unsatisfied) {
             _problem.Rollback();
-            _problem.SetLiteral(literal, false, isDecision: true);
+            _problem.SetLiteral(lit, !value, isDecision: true);
             result = DPLL();
             if (result.Outcome == SatSolverOutcome.Unsatisfied)
             {
@@ -116,6 +119,7 @@ public class NoCopyDPLLSolver : ISatSolver
         private List<Clause> _clauses;
         private bool?[] _assignments;
         private Stack<int> _assignmentsOrdered;
+        private LiteralClauseCount[] _literalClauseCounts;
 
         private readonly int[] _pureLiteralBuffer;
 
@@ -130,11 +134,29 @@ public class NoCopyDPLLSolver : ISatSolver
             _assignmentsOrdered = new Stack<int>(literalCount * 2);
             // the times 2 here is because we're storing positive and negative side by side
             _pureLiteralBuffer = new int[literalCount + 1];
+            _literalClauseCounts = new LiteralClauseCount[literalCount + 1];
         }
+
+        // public void Diagnostics()
+        // {
+        //     for(int i = 1; i < _literalClauseCounts.Length; i++)
+        //     {
+        //         var a = _literalClauseCounts[i];
+        //         Console.WriteLine($"{i:00}: n={a.Negative} p={a.Positive}");
+        //     }
+        // }
 
         public void AddClause(Clause clause)
         {
             _clauses.Add(clause);
+            foreach(var literal in clause.Literals)
+            {
+                int lit = Math.Abs(literal);
+                if (literal < 0)
+                    _literalClauseCounts[lit].Negative++;
+                else if (literal > 0)
+                    _literalClauseCounts[lit].Positive++;
+            }
         }
 
         public bool IsFullySatisfied()
@@ -210,14 +232,26 @@ public class NoCopyDPLLSolver : ISatSolver
 
         public int GetUnassignedVariable()
         {
+            int bestLiteral = 0;
+            int bestScore = int.MinValue;
             for(int i = 1; i < _assignments.Length; i++)
             {
-                if (!_assignments[i].HasValue)
+                if (_assignments[i].HasValue)
+                    continue;
+                if (_literalClauseCounts[i].Negative > bestScore)
                 {
-                    return i;
+                    bestLiteral = -i;
+                    bestScore = _literalClauseCounts[i].Negative;
+                }
+                if (_literalClauseCounts[i].Positive > bestScore)
+                {
+                    bestLiteral = i;
+                    bestScore = _literalClauseCounts[i].Positive;
                 }
             }
-            throw new InvalidOperationException("cannot get unassigned variable when all variables are assigned");
+            if (bestScore < 0)
+                throw new InvalidOperationException("cannot get unassigned variable when all variables are assigned");
+            return bestLiteral;
         }
 
         public int? GetUnitClauseLiteral()
@@ -321,5 +355,11 @@ public class NoCopyDPLLSolver : ISatSolver
         {
             Literals = literals;
         }
+    }
+
+    public struct LiteralClauseCount
+    {
+        public int Positive;
+        public int Negative;
     }
 }
