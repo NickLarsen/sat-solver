@@ -322,7 +322,7 @@ public class NoCopyDPLLSolver : ISatSolver
         }
     }
 
-    public class Clause
+    public struct Clause
     {
         public int[] Literals { get; }
 
