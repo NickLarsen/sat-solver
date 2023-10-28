@@ -85,13 +85,8 @@ public class NoCopyDPLLSolver : ISatSolver
         {
             var unitClausesLiteral = problem.GetUnitClauseLiteral();
             if (!unitClausesLiteral.HasValue) break;
-            var literal = unitClausesLiteral.Value;
-            bool satisfiedValue = true;
-            if (literal < 0)
-            {
-                literal = -literal;
-                satisfiedValue = false;
-            }
+            var literal = Math.Abs(unitClausesLiteral.Value);
+            bool satisfiedValue = unitClausesLiteral.Value > 0;
             problem.SetLiteral(literal, satisfiedValue, isDecision: false);
         }
     }
@@ -105,13 +100,8 @@ public class NoCopyDPLLSolver : ISatSolver
                 break;
             foreach(var literal in pureLiterals)
             {
-                int lit = literal;
-                bool satisfiedValue = true;
-                if (literal < 0)
-                {
-                    lit = -lit;
-                    satisfiedValue = false;
-                }
+                int lit = Math.Abs(literal);
+                bool satisfiedValue = literal > 0;
                 problem.SetLiteral(lit, satisfiedValue, isDecision: false);
             }
         }
@@ -151,22 +141,23 @@ public class NoCopyDPLLSolver : ISatSolver
 
         public bool IsFullySatisfied()
         {
-            return _clauses.All(ClauseIsSatisfied);
-        }
-        private bool ClauseIsSatisfied(Clause clause)
-        {
-            return clause.Literals.Any(LiteralIsSatisfied);
-        }
-        private bool LiteralIsSatisfied(int literal)
-        {
-            int lit = literal;
-            bool satisfiedValue = true;
-            if (lit < 0)
+            foreach(var clause in _clauses)
             {
-                lit = -lit;
-                satisfiedValue = false;
+                bool isSatisfied = false;
+                foreach(var literal in clause.Literals)
+                {
+                    int lit = Math.Abs(literal);
+                    bool satisfiedValue = literal > 0;
+                    if (_assignments[lit] == satisfiedValue)
+                    {
+                        isSatisfied = true;
+                        break;
+                    }
+                }
+                if (!isSatisfied)
+                    return false;
             }
-            return _assignments[lit] == satisfiedValue;
+            return true;
         }
 
         public bool[] GetFinalAssignments()
@@ -224,25 +215,39 @@ public class NoCopyDPLLSolver : ISatSolver
 
         public bool HasConflict()
         {
-            return _clauses.Any(ClauseHasConflict);
-        }
-        private bool ClauseHasConflict(Clause clause)
-        {
-            return clause.Literals.All(ValueUnsatisfied);
-        }
-        private bool ValueUnsatisfied(int literal)
-        {
-            bool falseValue = false;
-            int literalIndex = literal;
-            if (literal < 0) 
+            foreach(var clause in _clauses)
             {
-                falseValue = true;
-                literalIndex = -literalIndex;
+                bool allUnsatisfied = true;
+                foreach(var literal in clause.Literals)
+                {
+                    bool unsatisfiedValue = literal < 0;
+                    int literalIndex = Math.Abs(literal);
+                    bool isUnsatisfied = _assignments[literalIndex] == unsatisfiedValue;
+                    allUnsatisfied = allUnsatisfied && isUnsatisfied;
+                }
+                if (allUnsatisfied)
+                    return true;
             }
-            return _assignments[literalIndex] == falseValue;
+            return false;
         }
 
         public int GetUnassignedVariable()
+        {
+            //return GetUnassignedVariableRandom();
+            return GetFirstUnassigned();
+        }
+        private int GetFirstUnassigned()
+        {
+            for(int i = 1; i < _assignments.Length; i++)
+            {
+                if (!_assignments[i].HasValue)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        private int GetUnassignedVariableRandom()
         {
             int remaining = LiteralCount - _assignmentCount;
             if (remaining == 0) return -1;
@@ -281,13 +286,8 @@ public class NoCopyDPLLSolver : ISatSolver
             int? unassigned = null;
             foreach(var literal in clause.Literals)
             {
-                int lit = literal;
-                bool unsatisfiedValue = false;
-                if (lit < 0)
-                {
-                    lit = -literal;
-                    unsatisfiedValue = true;
-                }
+                int lit = Math.Abs(literal);
+                bool unsatisfiedValue = literal < 0;
                 bool? assignedValue = _assignments[lit];
                 if (assignedValue.HasValue)
                 {
@@ -312,14 +312,30 @@ public class NoCopyDPLLSolver : ISatSolver
             return null;
         }
 
+        // usually when you call this it will be very few pure literals
+        // so this just avoid excess resizing
+        private readonly List<int> _pureLiteralsResultsBuffer = new List<int>(32);
         public IReadOnlyList<int> GetPureLiterals()
         {
             Array.Clear(_pureLiteralBuffer);
             foreach(var clause in _clauses)
             {
                 // if the clause is satisfied, then don't count anything
-                if (ClauseIsSatisfied(clause))
+                bool isSatisfied = false;
+                foreach(var literal in clause.Literals)
+                {
+                    int lit = Math.Abs(literal);
+                    bool satisfiedValue = literal > 0;
+                    if (_assignments[lit] == satisfiedValue)
+                    {
+                        isSatisfied = true;
+                        break;
+                    }
+                }
+                if (isSatisfied)
                     continue;
+                // if (ClauseIsSatisfied(clause))
+                //     continue;
                 // if not satisfied, count all unassigned variables
                 foreach(var literal in clause.Literals)
                 {
@@ -334,18 +350,16 @@ public class NoCopyDPLLSolver : ISatSolver
                     _pureLiteralBuffer[lit] |= value;
                 }
             }
-            // usually when you call this it will be very few pure literals
-            // so this just avoid excess resizing
-            var result = new List<int>(32);
+            _pureLiteralsResultsBuffer.Clear();
             for(int literal = 1; literal < _pureLiteralBuffer.Length; literal++)
             {
                 var seen = _pureLiteralBuffer[literal];
                 if (seen == 1)
-                    result.Add(-literal);
+                    _pureLiteralsResultsBuffer.Add(-literal);
                 else if (seen == 2)
-                    result.Add(literal);
+                    _pureLiteralsResultsBuffer.Add(literal);
             }
-            return result;
+            return _pureLiteralsResultsBuffer;
         }
     }
 
