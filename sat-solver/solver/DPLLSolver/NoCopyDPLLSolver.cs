@@ -116,7 +116,6 @@ public class NoCopyDPLLSolver : ISatSolver
         private List<Clause> _clauses;
         private bool?[] _assignments;
         private Stack<int> _assignmentsOrdered;
-        private Random _random = new Random();
 
         private readonly int[] _pureLiteralBuffer;
 
