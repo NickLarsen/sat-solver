@@ -52,16 +52,16 @@ public class NoCopyDPLLSolver : ISatSolver
         DPLLCalls += 1;
         EliminateUnitClauses(_problem);
         AssignPureLiterals(_problem);
-        if (_problem.IsFullySatisfied()) {
-            return new SatSolverResponse { 
-                Outcome = SatSolverOutcome.Satisfied,
-                SatisfyingAssignment = _problem.GetFinalAssignments(),
-            };
-        }
         if (_problem.HasConflict()) {
             return new SatSolverResponse { 
                 Outcome = SatSolverOutcome.Unsatisfied,
                 // TODO: proof
+            };
+        }
+        if (_problem.IsFullySatisfied()) {
+            return new SatSolverResponse { 
+                Outcome = SatSolverOutcome.Satisfied,
+                SatisfyingAssignment = _problem.GetFinalAssignments(),
             };
         }
         var literal = _problem.GetUnassignedVariable();
