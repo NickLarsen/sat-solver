@@ -246,4 +246,6 @@ public class NoCopyDPLLSolverTests
         Assert.Equal((bool?)null, assignments[2]);
         Assert.Equal(true, assignments[3]);
     }
+
+    // test for 1, 2, 3, -3, 2, 3, esures there is sufficient rolling back
 }
