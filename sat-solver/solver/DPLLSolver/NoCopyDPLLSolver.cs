@@ -116,7 +116,6 @@ public class NoCopyDPLLSolver : ISatSolver
         private List<Clause> _clauses;
         private bool?[] _assignments;
         private Stack<int> _assignmentsOrdered;
-        private int _assignmentCount = 0;
         private Random _random = new Random();
 
         private readonly int[] _pureLiteralBuffer;
@@ -180,7 +179,6 @@ public class NoCopyDPLLSolver : ISatSolver
             // set the value that was intented
             _assignments[literal] = value;
             _assignmentsOrdered.Push(literal);
-            _assignmentCount += 1;
         }
 
         public void Rollback()
@@ -190,10 +188,6 @@ public class NoCopyDPLLSolver : ISatSolver
             {
                 i = _assignmentsOrdered.Pop();
                 _assignments[i] = null;
-                if (i != 0)
-                {
-                    _assignmentCount -= 1;
-                }
             }
         }
 
