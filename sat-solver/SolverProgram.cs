@@ -27,9 +27,12 @@ public class SolverProgram
         Console.WriteLine($"Literal Count: {solver.LiteralCount}, Clause Count: {solver.ClauseCount}");
         Console.WriteLine($"Load time: {timer.Elapsed.TotalSeconds}");
 
+        var a = new Timer(_ => Console.WriteLine($"{timer.Elapsed.TotalSeconds:0000.0000}: {solver.DPLLCalls:0,0}"), null, 0, 10000);
+
         var result = solver.Solve();
         Console.WriteLine($"Result: {result.Outcome}");
 
+        a.Change(0, Timeout.Infinite);
         timer.Stop();
         Console.WriteLine($"Time: {timer.Elapsed.TotalSeconds}");
     }
