@@ -45,42 +45,7 @@ public class NoCopyDPLLSolver : ISatSolver
 
     public SatSolverResponse Solve()
     {
-        return DPLL();
-        //return DPLLIterative();
-    }
-
-    private SatSolverResponse DPLL()
-    {
-        DPLLCalls += 1;
-        EliminateUnitClauses(_problem);
-        AssignPureLiterals(_problem);
-        if (_problem.HasConflict()) {
-            return new SatSolverResponse { 
-                Outcome = SatSolverOutcome.Unsatisfied,
-                // TODO: proof
-            };
-        }
-        if (_problem.IsFullySatisfied()) {
-            return new SatSolverResponse { 
-                Outcome = SatSolverOutcome.Satisfied,
-                SatisfyingAssignment = _problem.GetFinalAssignments(),
-            };
-        }
-        var literal = _problem.GetUnassignedVariable();
-        var lit = Math.Abs(literal);
-        var value = literal > 0;
-        _problem.SetLiteral(lit, value, isDecision: true);
-        var result = DPLL();
-        if (result.Outcome == SatSolverOutcome.Unsatisfied) {
-            _problem.Rollback();
-            _problem.SetLiteral(lit, !value, isDecision: true);
-            result = DPLL();
-            if (result.Outcome == SatSolverOutcome.Unsatisfied)
-            {
-                _problem.Rollback();
-            }
-        }
-        return result;
+        return DPLLIterative();
     }
 
     private const bool DO_TRY_OPPOSITE = true;
