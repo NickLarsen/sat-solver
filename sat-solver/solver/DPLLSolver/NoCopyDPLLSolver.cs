@@ -181,7 +181,6 @@ public class NoCopyDPLLSolver : ISatSolver
             _assignments[literal] = value;
             _assignmentsOrdered.Push(literal);
             _assignmentCount += 1;
-            //LogAssignments("set lite", $"{_assignmentCount}, {literal}, {value}, {isDecision}");
         }
 
         public void Rollback()
@@ -196,21 +195,6 @@ public class NoCopyDPLLSolver : ISatSolver
                     _assignmentCount -= 1;
                 }
             }
-            //LogAssignments("rollback", $"{_assignmentCount}");
-        }
-
-        private void LogAssignments(string reason, string? extra = null)
-        {
-            var values = _assignments.Skip(1).Select(m => m switch { true => "T", false => "F", null => "U" }).ToArray();
-            Console.Write($"{reason}: ");
-            for(int i = 0; i < values.Length; i++)
-            {
-                Console.Write(values[i]);
-                Console.Write(',');
-                if (i % 10 == 9)
-                    Console.Write(' ');
-            }
-            Console.WriteLine($"    {extra}");
         }
 
         public bool HasConflict()
@@ -233,11 +217,6 @@ public class NoCopyDPLLSolver : ISatSolver
 
         public int GetUnassignedVariable()
         {
-            //return GetUnassignedVariableRandom();
-            return GetFirstUnassigned();
-        }
-        private int GetFirstUnassigned()
-        {
             for(int i = 1; i < _assignments.Length; i++)
             {
                 if (!_assignments[i].HasValue)
@@ -245,27 +224,7 @@ public class NoCopyDPLLSolver : ISatSolver
                     return i;
                 }
             }
-            return -1;
-        }
-        private int GetUnassignedVariableRandom()
-        {
-            int remaining = LiteralCount - _assignmentCount;
-            if (remaining == 0) return -1;
-            int selection = _random.Next(remaining);
-            int passed = 0;
-            int i = 1;
-            for(; i < _assignments.Length; i++)
-            {
-                if (_assignments[i].HasValue)
-                    continue;
-                if (passed == selection)
-                {
-                    //LogAssignments("get unas", $"-- {selection}, {passed}, {i}");
-                    return i;
-                }
-                passed += 1;
-            }
-            throw new InvalidOperationException($"failed GetUnassignedVariable {LiteralCount}, {_assignmentCount}, {selection}");
+            throw new InvalidOperationException("cannot get unassigned variable when all variables are assigned");
         }
 
         public int? GetUnitClauseLiteral()
