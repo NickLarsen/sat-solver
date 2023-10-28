@@ -293,8 +293,6 @@ public class NoCopyDPLLSolver : ISatSolver
                 }
                 if (isSatisfied)
                     continue;
-                // if (ClauseIsSatisfied(clause))
-                //     continue;
                 // if not satisfied, count all unassigned variables
                 foreach(var literal in clause.Literals)
                 {
