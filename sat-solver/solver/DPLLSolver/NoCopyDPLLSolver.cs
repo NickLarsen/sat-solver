@@ -46,6 +46,7 @@ public class NoCopyDPLLSolver : ISatSolver
     public SatSolverResponse Solve()
     {
         return DPLL();
+        //return DPLLIterative();
     }
 
     private SatSolverResponse DPLL()
@@ -80,6 +81,48 @@ public class NoCopyDPLLSolver : ISatSolver
             }
         }
         return result;
+    }
+
+    private const bool DO_TRY_OPPOSITE = true;
+    private const bool DONT_TRY_OPPOSITE = false;
+    private SatSolverResponse DPLLIterative()
+    {
+        var selections = new Stack<(int literal, bool value, bool tryOpposite)>(LiteralCount);
+        do
+        {
+            DPLLCalls += 1;
+            EliminateUnitClauses(_problem);
+            AssignPureLiterals(_problem);
+            if (_problem.IsFullySatisfied()) {
+                return new SatSolverResponse { 
+                    Outcome = SatSolverOutcome.Satisfied,
+                    SatisfyingAssignment = _problem.GetFinalAssignments(),
+                };
+            }
+            if (_problem.HasConflict()) {
+                while(selections.Count > 0)
+                {
+                    var (previousLiteral, attemptedValue, tryOpposite) = selections.Pop();
+                    _problem.Rollback();
+                    if (tryOpposite)
+                    {
+                        _problem.SetLiteral(previousLiteral, !attemptedValue, isDecision: true);
+                        selections.Push((previousLiteral, !attemptedValue, DONT_TRY_OPPOSITE));
+                        break;
+                    }
+                }
+                continue;
+            }
+            var nextLiteral = _problem.GetUnassignedVariable();
+            var lit = Math.Abs(nextLiteral);
+            var satisfyingValue = nextLiteral > 0;
+            _problem.SetLiteral(lit, satisfyingValue, isDecision: true);
+            selections.Push((lit, satisfyingValue, DO_TRY_OPPOSITE));
+        } while (selections.Count > 0);
+        return new SatSolverResponse { 
+            Outcome = SatSolverOutcome.Unsatisfied,
+            // TODO: proof
+        };
     }
 
     public static void EliminateUnitClauses(Problem problem)
