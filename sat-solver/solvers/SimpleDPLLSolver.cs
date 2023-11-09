@@ -1,6 +1,6 @@
 using sat_solver.io;
 
-namespace sat_solver.solver.DPLL;
+namespace sat_solver.solvers;
 
 public class SimpleDPLLSolver : ISatSolver
 {

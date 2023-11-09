@@ -1,4 +1,4 @@
-using sat_solver.solver.DPLL;
+using sat_solver.solvers;
 
 namespace sat_solver.test.solvers;
 

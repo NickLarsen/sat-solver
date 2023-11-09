@@ -1,8 +1,8 @@
 using sat_solver.io;
 
-namespace sat_solver.solver.DPLL;
+namespace sat_solver.solvers;
 
-public class NoCopyDPLLSolver : ISatSolver
+public class CDCLSolver : ISatSolver
 {
     public int LiteralCount => _problem.LiteralCount;
     public int ClauseCount => _problem.ClauseCount;

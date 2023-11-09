@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using sat_solver.io;
-using sat_solver.solver.DPLL;
+using sat_solver.solvers;
 
 namespace sat_solver;
 
@@ -33,17 +33,19 @@ public class SolverProgram
         Console.WriteLine($"Result: {result.Outcome}");
 
         a.Change(0, Timeout.Infinite);
+        a.Dispose();
         timer.Stop();
         Console.WriteLine($"Time: {timer.Elapsed.TotalSeconds}");
     }
 
-    private ISatSolver GetSolverInstance(string solverName)
+    private static ISatSolver GetSolverInstance(string solverName)
     {
         return solverName switch
         {
             "simple" => new SimpleDPLLSolver(),
             "no-copy" => new NoCopyDPLLSolver(),
-            _ => throw new ArgumentException("Unknown solver specified", "solverName"),
+            "cdcl" => new CDCLSolver(),
+            _ => throw new ArgumentException("Unknown solver specified", nameof(solverName)),
         };
     }
 }
