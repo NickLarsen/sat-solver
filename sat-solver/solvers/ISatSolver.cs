@@ -1,6 +1,6 @@
 using sat_solver.io;
 
-namespace sat_solver;
+namespace sat_solver.solvers;
 
 public enum SatSolverOutcome
 {

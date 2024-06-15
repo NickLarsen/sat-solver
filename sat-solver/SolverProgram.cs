@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using sat_solver.io;
 using sat_solver.solvers;
+using sat_solver.solvers.dpll;
 
 namespace sat_solver;
 
@@ -20,7 +21,7 @@ public class SolverProgram
 
         Console.WriteLine($"File: {args[0]}");
         IDimacsReader fileReader = new DimacsReader(fileInfo);
-        ISatSolver solver = new SimpleDPLLSolver();
+        ISatSolver solver = new DPLLSolver();
         solver.Init(fileReader);
         Console.WriteLine($"Literal Count: {solver.LiteralCount}, Clause Count: {solver.ClauseCount}");
         Console.WriteLine($"Load time: {timer.Elapsed.TotalSeconds}");
