@@ -15,4 +15,8 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="0.37.2" />
+  </ItemGroup>
+
 </Project>

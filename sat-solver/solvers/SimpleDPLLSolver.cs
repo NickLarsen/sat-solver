@@ -205,7 +205,7 @@ public class SimpleDPLLSolver : ISatSolver
 
     class Clause
     {
-        public int[] Literals { get; set; }
+        public required int[] Literals { get; set; }
         public bool IsEmptyClause => Literals.Length == 0;
         public bool IsUnitClause => Literals.Length == 1;
     }

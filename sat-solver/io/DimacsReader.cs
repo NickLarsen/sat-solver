@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using SharpCompress.Compressors.Xz;
 
 namespace sat_solver.io;
 
@@ -8,6 +9,7 @@ public class DimacsReader : IDimacsReader, IDisposable
     private const int COMMENT_LINE_STARTER = 'c';
     private const int PROBLEM_LINE_STARTER = 'p';
 
+    private Stream _readStream;
     private Stream _fileStream;
     // this buffer is used to return clauses
     // this impl arbitrarily limits the max number of clauses to what this data structure can support
@@ -19,14 +21,13 @@ public class DimacsReader : IDimacsReader, IDisposable
     public DimacsReader(FileInfo fileInfo)
     {
         _fileStream = File.OpenRead(fileInfo.FullName);
+        _readStream = new XZStream(_fileStream);
     }
 
     public void Dispose()
     {
-        if (_fileStream != null)
-        {
-            _fileStream.Dispose();
-        }
+        _readStream?.Dispose();
+        _fileStream?.Dispose();
     }
 
     public IReadOnlyList<int>? ReadNextClause()
@@ -60,7 +61,7 @@ public class DimacsReader : IDimacsReader, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ReadNextByte()
     {
-        _current = _fileStream.ReadByte();
+        _current = _readStream.ReadByte();
         //Console.WriteLine($"{_current} '{Convert.ToChar(_current)}'");
     }
 

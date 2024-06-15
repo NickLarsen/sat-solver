@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using sat_solver.io;
 using sat_solver.solvers;
 
@@ -24,21 +25,29 @@ public class InspectorProgram
         var files = Directory.GetFiles(pathArg, pattern);
         foreach(var file in files)
         {
+            var timer = Stopwatch.StartNew();
             var fileInfo = new FileInfo(file);
             using var fileReader = new DimacsReader(fileInfo);
             var (l, c) = fileReader.ReadHeader();
-            infos.Add(new DimacsFileInfo { FileInfo = fileInfo, LiteralCount = l, ClauseCount = c });
+            timer.Stop();
+            infos.Add(new DimacsFileInfo { 
+                FileInfo = fileInfo, 
+                LiteralCount = l, 
+                ClauseCount = c, 
+                ReadDuration = timer.Elapsed 
+            });
         }
         foreach(var info in infos.OrderBy(m => m.LiteralCount))
         {
-            Console.WriteLine($"lit: {info.LiteralCount, 8}, cla: {info.ClauseCount, 8}, {info.FileInfo.Name}");
+            Console.WriteLine($"lit: {info.LiteralCount, 8}, cla: {info.ClauseCount, 8}, dur: {info.ReadDuration.TotalMilliseconds}, {info.FileInfo.Name}");
         }
     }
 
     private class DimacsFileInfo
     {
-        public FileInfo FileInfo { get; set; }
+        public required FileInfo FileInfo { get; set; }
         public int LiteralCount { get; set; }
         public int ClauseCount { get; set; }
+        public TimeSpan ReadDuration { get; set; }
     }
 }

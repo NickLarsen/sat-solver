@@ -21,7 +21,7 @@ public class SolverProgram
         if (!fileInfo.Exists)
             throw new ArgumentException($"provided file does not exist '{fileInfo.FullName}'");
 
-        IDimacsReader fileReader = new DimacsReaderBuffered(fileInfo);
+        IDimacsReader fileReader = new DimacsReader(fileInfo);
         ISatSolver solver = GetSolverInstance(solverName);
         solver.Init(fileReader);
         Console.WriteLine($"Literal Count: {solver.LiteralCount}, Clause Count: {solver.ClauseCount}");
