@@ -43,8 +43,6 @@ public class SolverProgram
         return solverName switch
         {
             "simple" => new SimpleDPLLSolver(),
-            "no-copy" => new NoCopyDPLLSolver(),
-            "cdcl" => new CDCLSolver(),
             _ => throw new ArgumentException("Unknown solver specified", nameof(solverName)),
         };
     }
