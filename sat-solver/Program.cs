@@ -8,7 +8,6 @@ internal class Program
         bool debugging = Debugger.IsAttached;
         string target = "solve";
         string[] targetArgs = new[] {
-            "no-copy",
             "../problems/2023/0a4ed112f2cdc0a524976a15d1821097-cliquecoloring_n12_k9_c8.cnf.xz"
         };
 
