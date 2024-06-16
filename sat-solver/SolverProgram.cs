@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using sat_solver.io;
 using sat_solver.solvers;
-using sat_solver.solvers.dpll;
 using sat_solver.solvers.dpll_fast;
 
 namespace sat_solver;
