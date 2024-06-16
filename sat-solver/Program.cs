@@ -8,7 +8,7 @@ internal class Program
         bool debugging = Debugger.IsAttached;
         string target = "solve";
         string[] targetArgs = new[] {
-            "../problems/2023/0a4ed112f2cdc0a524976a15d1821097-cliquecoloring_n12_k9_c8.cnf.xz"
+            "../problems/2023/03de316ba1e90305471a3b8620cb9cd7-satsgi-n23himBHm26-p0-q248.cnf.xz"
         };
 
         if (!debugging)

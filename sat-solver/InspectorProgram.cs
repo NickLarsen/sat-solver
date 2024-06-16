@@ -16,7 +16,7 @@ public class InspectorProgram
 
         Console.WriteLine($"Path: {args[0]}");
         string pathArg = args[0].Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-        var pattern = "*.cnf";
+        var pattern = "*.cnf.xz";
         if (args.Length >= 2)
         {
             pattern = args[1];

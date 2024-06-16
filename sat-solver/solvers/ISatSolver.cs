@@ -21,6 +21,6 @@ public interface ISatSolver
     public int LiteralCount { get; }
     public int ClauseCount { get; }
     public long DPLLCalls { get; }
-    void Init(IDimacsReader problem);
+    void Init(IDimacsReader problemReader);
     SatSolverResponse Solve();
 }
